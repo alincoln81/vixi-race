@@ -15,11 +15,13 @@ app.get('/', (req, res) => {
 });
 
 const io = new Server(httpServer, {
-  cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"]
-  },
-  maxHttpBufferSize: 1e6 // 1 MB limit
+    cors: {
+        origin: process.env.NODE_ENV === 'production' 
+            ? '*'  // Or specify your domain
+            : "http://localhost:3000",
+        methods: ["GET", "POST"]
+    },
+    maxHttpBufferSize: 1e6 // 1 MB limit
 });
 
 // Game state

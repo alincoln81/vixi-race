@@ -131,7 +131,11 @@
     <!-- Custom JS -->
     <script>
         // Now you can use import statements
-        const socket = io('http://localhost:3000');
+        // Replace
+        //const socket = io('http://localhost:3000');
+
+        // With
+        const socket = io(window.location.origin);
 
         // Your socket event listeners and other code
         socket.on('connect', () => {
