@@ -41,6 +41,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 .click-area:active {
     transform: scale(.95);
+    touch-action: manipulation;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
 }
 /*
 .popcorn { background: #ffd70033; }
