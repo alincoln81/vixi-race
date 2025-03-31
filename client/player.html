@@ -36,7 +36,7 @@
         </div>
 
         <!-- Game Title --> 
-        <h2 id="game-title">Join the Race!</h2>
+        <h2 class="uk-text-center uk-margin-small-top" id="game-title">Join the Race!</h2>
 
         <!-- Player Setup -->
         <div id="player-setup">
@@ -88,16 +88,17 @@
 
         <!-- Game Area -->  
         <div id="game-area" class="uk-hidden uk-margin-auto">
-            <div class="uk-flex uk-flex-middle uk-margin">
+            <div class="uk-margin">
+                <h3 class="uk-margin-remove-bottom uk-margin-remove-top uk-text-center">Hi <span id="player-name-display"></span>!</h3>
             </div>
             <div id="click-area" class="click-area uk-card uk-card-default uk-card-body uk-text-center uk-margin-auto">
                 <img id="player-avatar-game" class="avatar-preview uk-margin-right" alt="Player avatar" style="height: 100%; width: 100%; margin: 0px;">
             </div>
 
-            <div id="game-info" class="uk-margin-medium-top">
-                <h3 class="uk-margin-remove-bottom"><span id="player-name-display"></span> playing for <span id="team-display"></span></h3>
+            <div id="game-info" class="uk-margin-top">
+                <h4 class="uk-margin-remove-bottom uk-margin-remove-top">Team: <span id="team-display"></span></h4>
                 <h4 class="uk-margin-remove-bottom uk-margin-small-top">Time Remaining: <span id="timer">0</span>s</h4>
-                <h4 class="uk-margin-small-top">Team Clicks: <span id="clicks">0</span></h4>
+                <h4 class="uk-margin-small-top uk-margin-remove-bottom">Team Clicks: <span id="clicks">0</span></h4>
             </div>
         </div>
     </div>
@@ -193,7 +194,7 @@
                 // Update game area with player info
                 document.getElementById('player-name-display').textContent = playerName;
                 document.getElementById('team-display').textContent = 
-                    `${myTeam.charAt(0).toUpperCase() + myTeam.slice(1)} Team`;
+                    `${myTeam.charAt(0).toUpperCase() + myTeam.slice(1)}`;
                 document.getElementById('player-avatar-game').src = 
                     playerAvatar || '/assets/images/default-avatar.png';
 
