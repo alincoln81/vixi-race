@@ -230,6 +230,24 @@
                     // Update game info
                     document.getElementById('clicks').textContent = state.teams[myTeam].clicks;
                     document.getElementById('timer').textContent = state.timeRemaining;
+
+                    // Animate the click area
+                    clickArea.addEventListener('mousedown', () => {
+                        clickArea.classList.add('active');
+                    });
+
+                    clickArea.addEventListener('touchstart', () => {
+                        clickArea.classList.add('active');
+                    });
+
+                    clickArea.addEventListener('mouseup', () => {
+                        clickArea.classList.remove('active');
+                    });
+
+                    clickArea.addEventListener('touchend', () => {
+                        clickArea.classList.remove('active');
+                    });
+
                 } else {
                     gameInfo.classList.remove('show');
                     clickArea.style.pointerEvents = 'none';
