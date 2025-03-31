@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vixi Race - Player</title>
+
+    <!-- UIkit CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.17.11/dist/css/uikit.min.css" />
+
+    <!-- Material Design Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.3.67/css/materialdesignicons.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/player.css">
+
+    <!-- UIkit JS -->
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.17.11/dist/js/uikit.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.17.11/dist/js/uikit-icons.min.js"></script>
+
+  
+
+</head>
+<body>
+
+    <div class="uk-container uk-padding">
+
+        <!-- Logo -->
+        <div id="logo" class="uk-margin-medium-bottom">
+            <div class="uk-flex uk-flex-middle uk-margin uk-flex-center">
+                <span>
+                    <img src="/assets/images/vixi-v.svg" alt="Vixi" style="height: 80px;">
+                </span>
+                <h2 class="uk-margin-remove" id="logo-text">VIXI RACE</h2>
+            </div>
+        </div>
+
+        <!-- Game Title --> 
+        <h2 id="game-title">Join the Race!</h2>
+
+        <!-- Player Setup -->
+        <div id="player-setup">
+            <form id="player-form" class="uk-form-stacked">
+                <!-- Player Name -->
+                <div class="uk-margin">
+                    <!-- <label class="uk-form-label" for="player-name">Your Name</label> -->
+                    <div class="uk-form-controls">
+                        <input class="uk-input" id="player-name" type="text" required 
+                               placeholder="Enter your name">
+                    </div>
+                </div>
+
+                <!-- Avatar Upload -->
+                <div class="uk-margin">
+                    <!-- <label class="uk-form-label" for="player-avatar">Avatar</label> -->
+                    <div id="avatar-upload" class="uk-form-controls uk-margin-auto uk-text-center">
+                        <img id="avatar-preview" src="/assets/images/default-avatar.png" class="avatar-preview" alt="Avatar preview" style="height: 300px; width: 300px;">
+                        <div id="avatar-upload-button" uk-form-custom>
+                            <input type="file" id="player-avatar" accept="image/*">
+                            <button class="uk-button uk-button-default" type="button" tabindex="-1">
+                                Avatar <span class="mdi mdi-upload"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Selection Dropdown -->
+                <div class="uk-margin">
+                    <!-- <label class="uk-form-label" for="team-select">Select Team</label> -->
+                    <div class="uk-form-controls">
+                        <select class="uk-select" id="team-select" required>
+                            <option value="">Choose your team...</option>
+                            <option value="popcorn">Popcorn</option>
+                            <option value="hamburger">Hamburger</option>
+                            <option value="hotdog">Hot Dog</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Join Button -->
+                <div class="uk-margin">
+                    <button type="submit" class="uk-button uk-button-primary uk-width-1-1">
+                        Join Race <span class="mdi mdi-flag-checkered"></span> 
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Game Area -->  
+        <div id="game-area" class="uk-hidden uk-margin-auto">
+            <div class="uk-flex uk-flex-middle uk-margin">
+            </div>
+            <div id="click-area" class="click-area uk-card uk-card-default uk-card-body uk-text-center uk-margin-auto">
+                <img id="player-avatar-game" class="avatar-preview uk-margin-right" alt="Player avatar" style="height: 100%; width: 100%; margin: 0px;">
+            </div>
+
+            <div id="game-info" class="uk-margin-medium-top">
+                <h3 class="uk-margin-remove-bottom"><span id="player-name-display"></span> playing for <span id="team-display"></span></h3>
+                <h4 class="uk-margin-remove-bottom uk-margin-small-top">Time Remaining: <span id="timer">0</span>s</h4>
+                <h4 class="uk-margin-small-top">Team Clicks: <span id="clicks">0</span></h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Socket.IO client -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    
+    <!-- Game Script -->
+    <script>
+        // Global variables
+        let myTeam = null;
+        let playerName = '';
+        let playerAvatar = '/assets/images/default-avatar.png';
+        const socket = io('http://localhost:3000');
+
+        // Connect and identify as player
+        socket.on('connect', () => {
+            console.log('PLAYER: Connected to server');
+            socket.emit('userType', { type: 'player' });
+        });
+
+        // Add this function to handle image resizing
+        function resizeImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 300; // Set maximum width
+                        const MAX_HEIGHT = 300; // Set maximum height
+                        let width = img.width;
+                        let height = img.height;
+
+                        // Calculate new dimensions
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Convert to compressed JPEG
+                        const resizedImage = canvas.toDataURL('image/jpeg', 0.7);
+                        resolve(resizedImage);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Update the avatar file input handler
+        document.getElementById('player-avatar').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                try {
+                    const resizedImage = await resizeImage(file);
+                    document.getElementById('avatar-preview').src = resizedImage;
+                    playerAvatar = resizedImage;
+                } catch (error) {
+                    console.error('Error processing avatar:', error);
+                    // Reset avatar if there's an error
+                    document.getElementById('avatar-preview').src = '/assets/images/default-avatar.png';
+                    playerAvatar = null;
+                }
+            }
+        });
+
+        // Update form submission
+        document.getElementById('player-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            playerName = document.getElementById('player-name').value;
+            myTeam = document.getElementById('team-select').value;
+
+            if (playerName && myTeam) {
+                // Update game area with player info
+                document.getElementById('player-name-display').textContent = playerName;
+                document.getElementById('team-display').textContent = 
+                    `${myTeam.charAt(0).toUpperCase() + myTeam.slice(1)} Team`;
+                document.getElementById('player-avatar-game').src = 
+                    playerAvatar || '/assets/images/default-avatar.png';
+
+                // Join team with resized avatar
+                socket.emit('joinTeam', {
+                    team: myTeam,
+                    playerName: playerName,
+                    playerAvatar: playerAvatar || '/assets/images/default-avatar.png'
+                });
+
+                // Switch to game view
+                document.getElementById('player-setup').classList.add('uk-hidden');
+                document.getElementById('game-area').classList.remove('uk-hidden');
+                document.getElementById('click-area').classList.add(myTeam);
+                document.getElementById('click-area').classList.remove('uk-hidden');
+            }
+        });
+
+        // Handle game state updates
+        socket.on('gameState', (state) => {
+            console.log('Received gameState:', state); // Debug log
+            if (myTeam && state.teams[myTeam]) {
+                const clickArea = document.getElementById('click-area');
+                const gameInfo = document.getElementById('game-info');
+                const gameTitle = document.getElementById('game-title');
+
+                // Show/hide elements based on game state
+                if (state.isActive) {
+                    clickArea.style.pointerEvents = 'auto';
+                    gameInfo.classList.add('show');
+                    gameTitle.textContent = 'Click as fast as you can!';
+                    clickArea.classList.remove('uk-hidden');
+                    // Update game info
+                    document.getElementById('clicks').textContent = state.teams[myTeam].clicks;
+                    document.getElementById('timer').textContent = state.timeRemaining;
+                } else {
+                    gameInfo.classList.remove('show');
+                    clickArea.style.pointerEvents = 'none';
+                    gameTitle.textContent = 'Waiting for Race to Start!';
+                }
+            }
+        });
+
+        // Add error handling for socket connection
+        socket.on('connect_error', (error) => {
+            console.error('Connection error:', error);
+            alert('Error connecting to game server. Please try again.');
+        });
+
+        socket.on('error', (error) => {
+            console.error('Socket error:', error);
+            alert('Game server error. Please refresh the page and try again.');
+        });
+
+        // Handle game end
+        socket.on('gameEnd', (data) => {
+            if (data.winner !== 'timeout') {
+                // If player is on winning team, go to winner URL, otherwise go to loser URL
+                if (myTeam === data.winner) {
+                    window.location.href = data.winnerUrl || 'https://media.tenor.com/-Yf9G_sGZ-8AAAAM/youre-a-winner-winner.gif';
+                } else {
+                    window.location.href = data.loserUrl || 'https://media.tenor.com/1cd4rNbBLagAAAAM/diaryofawimpykid-loser.gif';
+                }
+            }
+        });
+
+        // Update reset handler to show setup form
+        socket.on('forceReset', (state) => {
+            myTeam = null;
+            playerName = '';
+            
+            document.getElementById('player-setup').classList.remove('uk-hidden');
+            document.getElementById('game-area').classList.add('uk-hidden');
+            
+            // Reset form
+            document.getElementById('player-form').reset();
+            document.getElementById('avatar-preview').src = '/assets/images/default-avatar.png';
+            
+            // Reset game area
+            const clickArea = document.getElementById('click-area');
+            clickArea.classList.remove('popcorn', 'hamburger', 'hotdog');
+            document.getElementById('clicks').textContent = '0';
+            document.getElementById('timer').textContent = '0';
+            
+            // Show waiting state, hide game elements
+            document.getElementById('click-area').classList.add('uk-hidden');
+            document.getElementById('game-info').classList.remove('show');
+        });
+
+        // Update click area handler with debug logs
+        document.getElementById('click-area').addEventListener('click', () => {
+            console.log('Click detected, myTeam:', myTeam); // Debug log
+            if (myTeam) {
+                console.log('Emitting playerClick for team:', myTeam); // Debug log
+                socket.emit('playerClick');
+            }
+        });
+
+        // Update your joinTeam function
+        function joinTeam(team) {
+            myTeam = team;
+            socket.emit('joinTeam', {
+                team: myTeam,
+                playerName: playerName,
+                playerAvatar: playerAvatar
+            });
+
+            // Switch to game view
+            document.getElementById('player-setup').classList.add('uk-hidden');
+            document.getElementById('game-area').classList.remove('uk-hidden');
+            document.getElementById('click-area').classList.add(team);
+            
+            // Initially show waiting state
+            document.getElementById('click-area').classList.add('uk-hidden');
+            document.getElementById('game-info').classList.remove('show');
+        }
+    </script>
+</body>
+</html>

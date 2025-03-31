@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vixi Race - Producer</title>
+
+    <!-- UIkit CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.17.11/dist/css/uikit.min.css" />
+
+    <!-- Material Design Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.3.67/css/materialdesignicons.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/producer.css">
+
+    <!-- UIkit JS -->
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.17.11/dist/js/uikit.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.17.11/dist/js/uikit-icons.min.js"></script>
+</head>
+<body>
+    
+    <div class="uk-container uk-padding">
+
+         <!-- Logo -->
+         <div id="logo" class="uk-margin-medium-bottom">
+            <div class="uk-flex uk-flex-middle uk-margin uk-flex-center">
+                <span>
+                    <img src="/assets/images/vixi-v.svg" alt="Vixi" style="height: 80px;">
+                </span>
+                <h2 class="uk-margin-remove" id="logo-text">VIXI RACE</h2>
+            </div>
+        </div>
+
+        <!-- Game Controls -->
+        <div class="uk-card uk-card-default uk-card-body uk-margin-bottom">
+            <h2>Game Controls</h2>
+            <div class="uk-margin">
+                <label>Time Limit (seconds):
+                    <input type="number" id="timeLimit" class="uk-input" min="10" max="300" value="30">
+                </label>
+            </div>
+            <div class="uk-margin">
+                <label>Clicks to Win:
+                    <input type="number" id="clicksToWin" class="uk-input" min="10" max="1000" value="10">
+                </label>
+            </div>
+            <div class="uk-margin">
+                <label>Winner URL:
+                    <input type="text" id="winnerUrl" class="uk-input" 
+                           value="https://media.tenor.com/-Yf9G_sGZ-8AAAAM/youre-a-winner-winner.gif">
+                </label>
+            </div>
+            <div class="uk-margin">
+                <label>Loser URL:
+                    <input type="text" id="loserUrl" class="uk-input" 
+                           value="https://media.tenor.com/1cd4rNbBLagAAAAM/diaryofawimpykid-loser.gif">
+                </label>
+            </div>
+            <div class="uk-margin" id="game-controls">
+                <button class="uk-button uk-button-default" onclick="updateSettings()">Update Settings</button>
+                <button class="uk-button uk-button-primary" onclick="startGame()">Start Game</button>
+                <button id="reset-game" class="uk-button uk-button-danger" onclick="resetGame()">Reset Game</button>
+            </div>
+        </div>
+
+        <div class="uk-card uk-card-default uk-card-body uk-margin-bottom">
+            <h2>Game Stats</h2>
+            <div id="game-status" class="team-stats popcorn-team uk-flex uk-flex-middle uk-margin-small-top" uk-grid>
+                <div class="team-image uk-width-auto">
+                    <img id="leader-logo" src="assets/images/default-avatar.png" alt="Vixi Logo" style="width: 100px; height: 100px;">
+                </div>
+                <div>
+                    <div id="game-status-timer"><h2 class="uk-margin-remove">Time Remaining: <span id="timer-value">30</span></h2></div>
+                    <div id="game-status-winning-team"><h2 class="uk-margin-remove">Winning Team: <span id="winning-team">Team Name</span></h2></div>
+                </div>
+            </div>
+
+            <div id="popcorn-stats" class="team-stats popcorn-team uk-flex uk-flex-middle uk-margin-small-top" uk-grid>
+                <div class="team-image uk-width-auto">
+                    <img src="assets/images/teams/stills/popcorn.png" alt="Popcorn Team" style="width: 100px; height: 100px;">
+                </div>
+                <div class="uk-width-expand">
+                    <strong>Popcorn Team</strong>
+                    <div>Players: <span class="player-count">0</span></div>
+                    <div>Clicks: <span class="click-count">0</span></div>
+                    <div>Progress: <span class="progress-percent">0</span>%</div>
+                    <div class="uk-margin-top">
+                        <div>Team Leader: <span class="leader-name">-</span></div>
+                        <div>Leader Clicks: <span class="leader-clicks">0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="hamburger-stats" class="team-stats hamburger-team uk-flex uk-flex-middle uk-margin-small-top" uk-grid>
+                <div class="team-image uk-width-auto">
+                    <img src="assets/images/teams/stills/burger.png" alt="Hamburger Team" style="width: 100px; height: 100px;">
+                </div>
+                <div class="uk-width-expand">
+                    <strong>Hamburger Team</strong>
+                    <div>Players: <span class="player-count">0</span></div>
+                    <div>Clicks: <span class="click-count">0</span></div>
+                    <div>Progress: <span class="progress-percent">0</span>%</div>
+                    <div class="uk-margin-top">
+                        <div>Team Leader: <span class="leader-name">-</span></div>
+                        <div>Leader Clicks: <span class="leader-clicks">0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="hotdog-stats" class="team-stats hotdog-team uk-flex uk-flex-middle uk-margin-small-top" uk-grid>
+                <div class="team-image uk-width-auto">
+                    <img src="assets/images/teams/stills/hotdog.png" alt="Hot Dog Team" style="width: 100px; height: 100px;">
+                </div>
+                <div class="uk-width-expand">
+                    <strong>Hot Dog Team</strong>
+                    <div>Players: <span class="player-count">0</span></div>
+                    <div>Clicks: <span class="click-count">0</span></div>
+                    <div>Progress: <span class="progress-percent">0</span>%</div>
+                    <div class="uk-margin-top">
+                        <div>Team Leader: <span class="leader-name">-</span></div>
+                        <div>Leader Clicks: <span class="leader-clicks">0</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Socket.IO client library -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <!-- Custom JS -->
+    <script>
+        // Now you can use import statements
+        const socket = io('http://localhost:3000');
+
+        // Your socket event listeners and other code
+        socket.on('connect', () => {
+            console.log('PRODUCER: Connected to server');
+            socket.emit('userType', { type: 'producer' });
+        });
+
+        // Add an error handler to catch any connection issues
+        socket.on('connect_error', (error) => {
+            console.error('Connection error:', error);
+        });
+
+        socket.on('gameState', (state) => {
+            updateStats(state);
+
+            // Update logo based on game state
+            const logoImg = document.getElementById('leader-logo');
+            if (state.isActive) {
+                const leader = getLeadingTeam(state);
+                console.log(leader);
+                if (leader) {
+                    logoImg.src = `assets/images/teams/stills/${leader.team}.png`;
+                    logoImg.alt = `${leader.team} Team Leading`;
+                } else {
+                    // Keep default avatar until a team has more than 1 click
+                    logoImg.src = 'assets/images/default-avatar.png';
+                    logoImg.alt = 'Vixi Logo';
+                }
+            } else {
+                logoImg.src = 'assets/images/default-avatar.png';
+                logoImg.alt = 'Vixi Logo';
+            }
+
+            // Update timer display
+            const timerValue = document.getElementById('timer-value');
+            if (state.isActive) {
+                timerValue.textContent = state.timeRemaining;
+            } else {
+                timerValue.textContent = '30';
+            }
+        });
+
+        socket.on('forceReset', (state) => {
+            updateStats(state);
+
+            // Reset logo to default
+            const logoImg = document.getElementById('leader-logo');
+            logoImg.src = 'assets/images/default-avatar.png';
+            logoImg.alt = 'Vixi Logo';
+
+            // Reset timer to default
+            document.getElementById('timer-value').textContent = '30';
+        });
+
+        function updateSettings() {
+            const timeLimit = parseInt(document.getElementById('timeLimit').value);
+            const clicksToWin = parseInt(document.getElementById('clicksToWin').value);
+            const winnerUrl = document.getElementById('winnerUrl').value;
+            const loserUrl = document.getElementById('loserUrl').value;
+            
+            socket.emit('updateSettings', { 
+                timeLimit, 
+                clicksToWin,
+                winnerUrl,
+                loserUrl
+            });
+        }
+
+        function startGame() {
+            socket.emit('startGame');
+        }
+
+        function resetGame() {
+            socket.emit('resetGame');
+        }
+
+        function updateStats(state) {
+            ['popcorn', 'hamburger', 'hotdog'].forEach(team => {
+                const teamData = state.teams[team];
+                const teamStats = document.getElementById(`${team}-stats`);
+                if (teamStats) {
+                    // Update existing stats
+                    teamStats.querySelector('.player-count').textContent = teamData.players;
+                    teamStats.querySelector('.click-count').textContent = teamData.clicks;
+                    teamStats.querySelector('.progress-percent').textContent = Math.round(teamData.position);
+
+                    // Find team leader
+                    const playerClicks = Object.values(teamData.playerClicks);
+                    const leader = playerClicks.length > 0 
+                        ? playerClicks.reduce((max, player) => 
+                            player.clicks > max.clicks ? player : max, 
+                            { name: '-', clicks: 0 })
+                        : { name: '-', clicks: 0 };
+
+                    // Update leader stats
+                    teamStats.querySelector('.leader-name').textContent = leader.name;
+                    teamStats.querySelector('.leader-clicks').textContent = leader.clicks;
+                }
+            });
+        }
+
+        function getLeadingTeam(state) {
+            const leader = Object.entries(state.teams)
+                .reduce((leader, [team, data]) => {
+                    // Only consider teams with more than 1 click
+                    if (data.clicks >= 1 && data.clicks > (leader?.clicks || -1)) {
+                        return {
+                            team,
+                            clicks: data.clicks
+                        };
+                    }
+                    return leader;
+                }, null);
+
+            return leader; // Will be null if no team has more than 1 click
+        }
+
+        socket.on('gameEnd', (data) => {
+            if (data.winner === 'timeout') {
+                console.log('Game Over - Time Out!');
+            } else {
+                console.log(`${data.winner} team wins!`);
+            }
+
+            // Reset logo to default
+            const logoImg = document.getElementById('leader-logo');
+            logoImg.src = 'assets/images/default-avatar.png';
+            logoImg.alt = 'Vixi Logo';
+
+            // Reset timer to default
+            document.getElementById('timer-value').textContent = '30';
+        });
+    </script>
+</body>
+</html>

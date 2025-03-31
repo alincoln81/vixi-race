@@ -1,0 +1,231 @@
+body {
+    background-color: #1b1b1b;
+    margin: 0;
+    padding: 0; 
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+}
+.stage {
+    width: 1920px;
+    height: 1080px;
+    background-color: #262626;
+    margin: 0 auto;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* This spreads the children apart */
+    background-image: url('/assets/images/bg.png');
+    background-size: cover;
+    background-position: center;
+}
+.leaderboard-container {
+    width: 800px;
+}
+
+.track-container {
+    margin-bottom: 0px; /* Space from bottom of viewport */
+}
+
+.track {
+    height: 100px;
+    margin: 20px 0;
+    background: #f0f0f0;
+    position: relative;
+}
+
+ /* Track colors */
+ #popcorn-track {
+    background-color: rgba(255, 0, 0, 0);
+    width: 1480px;
+    left: 150px;
+}   
+#hamburger-track {
+    background-color: rgba(0, 0, 255, 0);
+    width: 1605px;
+    left: 75px;
+}
+#hotdog-track {
+    background-color: rgba(0, 255, 0, 0);
+    width: 1750px;
+    left: 0px;
+}   
+
+.runner {
+    width: 200px; /* Adjust size as needed for your image */
+    height: 200px; /* Adjust size as needed for your image */
+    position: absolute;
+    bottom: 5px;
+    transition: left 0.3s ease-out;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.click-counter {
+    position: absolute;
+    bottom: -30px; /* Position below the runner */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(255, 255, 255, 0.5);
+    padding: 10px 20px;
+    border-radius: 8px;
+    color: #262626;
+    white-space: nowrap;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.popcorn-runner { 
+    background-image: url('/assets/images/teams/stills/popcorn.png');
+}
+.hamburger-runner { 
+    background-image: url('/assets/images/teams/stills/burger.png');
+}
+.hotdog-runner { 
+    background-image: url('/assets/images/teams/stills/hotdog.png');
+}
+
+/* Animated versions */
+.popcorn-runner.animated { 
+    background-image: url('/assets/images/teams/animated/popcorn.gif');
+}
+.hamburger-runner.animated { 
+    background-image: url('/assets/images/teams/animated/burger.gif');
+}
+.hotdog-runner.animated { 
+    background-image: url('/assets/images/teams/animated/hotdog.gif');
+}
+
+#timer {
+    font-size: 48px;
+    text-align: center;
+}
+
+.uk-h1, .uk-h2, .uk-h3, .uk-h4, .uk-h5, .uk-h6, 
+.uk-heading-2xlarge, .uk-heading-3xlarge, 
+.uk-heading-large, .uk-heading-medium, 
+.uk-heading-small, .uk-heading-xlarge,
+ h1, h2, h3, h4, h5, h6 {
+    color: #ffffff;
+}
+
+#logo-text {
+    background: linear-gradient(to bottom, #FFFFFF, #999999);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    padding-left: 20px;
+    font-size: 2em;
+    font-weight: 400;
+    letter-spacing: 0.09em;
+    color: #ffffff;
+}
+
+.logo-container {
+    background-color: #262626;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+}
+
+.timer-wrapper {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background-color: #262626;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.blank-wrapper {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background-color: transparent;
+}
+
+.leader-wrapper {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.28);
+    border: 1px dashed rgba(197, 197, 197, 0.25);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.leader-content {
+    position: absolute;
+    background-color: rgba(38, 38, 38, 0.8);
+    width: 100%;
+    font-size: 18px;
+    color: #ffffff;
+    border-radius: 6px;
+    padding: 10px 20px;
+    bottom: -25px;
+}
+
+.leader-image {
+    width: 100px;
+    height: 100px;
+    position: absolute;
+    bottom: 0;
+    right: -40px;
+}
+
+
+.winner-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.winner-modal.show {
+    display: flex;
+    opacity: 1 !important;
+}
+
+.uk-modal-dialog {
+    background: #262626;
+    padding: 30px;
+    border-radius: 10px;
+    max-width: 500px !important;
+    width: 90% !important;
+    opacity: 1 !important;
+}
+
+.winner-image {
+    max-width: 200px;
+    height: auto;
+    margin: 20px auto;
+}
+
+.winner-title {
+    color: #ffffff;
+    font-size: 2em;
+    margin-bottom: 20px;
+}
