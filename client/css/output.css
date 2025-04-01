@@ -25,7 +25,7 @@ body {
     position: relative;
 }
 .leaderboard-container {
-    width: 800px;
+    width: 1000px;
 }
 
 .track-container {
@@ -42,23 +42,23 @@ body {
  /* Track colors */
  #popcorn-track {
     background-color: rgba(255, 0, 0, 0);
-    width: 1480px;
+    width: 1430px;
     left: 150px;
 }   
 #hamburger-track {
     background-color: rgba(0, 0, 255, 0);
-    width: 1605px;
+    width: 1555px;
     left: 75px;
 }
 #hotdog-track {
     background-color: rgba(0, 255, 0, 0);
-    width: 1750px;
+    width: 1700px;
     left: 0px;
 }   
 
 .runner {
-    width: 200px; /* Adjust size as needed for your image */
-    height: 200px; /* Adjust size as needed for your image */
+    width: 275px; /* Adjust size as needed for your image */
+    height: 275px; /* Adjust size as needed for your image */
     position: absolute;
     bottom: 5px;
     transition: left 0.3s ease-out;
@@ -69,16 +69,14 @@ body {
 
 .click-counter {
     position: absolute;
-    bottom: -30px; /* Position below the runner */
+    bottom: 0px; /* Position below the runner */
     left: 50%;
     transform: translateX(-50%);
-    background-color: rgba(255, 255, 255, 0.5);
-    padding: 10px 20px;
-    border-radius: 8px;
-    color: #262626;
+    color: #ffffff;
     white-space: nowrap;
-    font-weight: bold;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-weight: 700;
+    text-shadow: 0 0 20px #000000;
+    font-size: 40px;
 }
 
 .popcorn-runner { 
@@ -102,9 +100,10 @@ body {
     background-image: url('/assets/images/teams/animated/hotdog.gif');
 }
 
-#timer {
-    font-size: 48px;
+#timer, .timer-wrapper h2 {
+    font-size: 60px;
     text-align: center;
+    font-weight: 600;
 }
 
 .uk-h1, .uk-h2, .uk-h3, .uk-h4, .uk-h5, .uk-h6, 
@@ -141,12 +140,15 @@ body {
     width: 200px;
     height: 200px;
     border-radius: 50%;
-    background-color: #262626;
-    color: #ffffff;
+    background-color: #4DB0C7;
+    border: 10px solid #51D9FE;
+    box-shadow: 0 0 15px 0 rgba(0, 0, 0, 0.5);
+    color: #1b1b1b;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
 }
 
 .blank-wrapper {
@@ -160,8 +162,8 @@ body {
     width: 200px;
     height: 200px;
     border-radius: 50%;
-    background-color: rgba(0, 0, 0, 0.28);
-    border: 1px dashed rgba(197, 197, 197, 0.25);
+    border: 2px dashed rgba(255, 255, 255, 1);
+    box-shadow: 0 0 15px 0 rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -170,27 +172,50 @@ body {
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
+    box-sizing: border-box;
 }
 
 .leader-content {
     position: absolute;
-    background-color: rgba(38, 38, 38, 0.8);
-    width: 100%;
-    font-size: 18px;
+    width: 300px;
+    font-size: 32px;
+    font-weight: 700;
     color: #ffffff;
-    border-radius: 6px;
-    padding: 10px 20px;
-    bottom: -25px;
+    bottom: -10px;
+    -webkit-text-stroke: 0.75px #1b1b1b;
+    z-index: 100;
+}
+
+.leader-content #hotdog-leader, .leader-content #hamburger-leader, .leader-content #popcorn-leader {
+    font-size: 50px;
+    font-weight: 800;
 }
 
 .leader-image {
-    width: 100px;
-    height: 100px;
+    width: 150px;
+    height: 150px;
     position: absolute;
     bottom: 0;
-    right: -40px;
+    right: -70px;
+    bottom: -30px;
 }
 
+.total-players-container {
+    position: relative;
+    background-color: #4DB0C7;
+    color: #ffffff;
+    border-radius: 12px;
+    padding: 25px 10px 10px 10px;
+    text-align: center;
+    margin: 0 auto;
+    max-width: 190px;
+    top: -65px;
+}
+
+.total-players-container h4 {
+    font-weight: 600;
+    font-size: 1.5em;
+}
 
 .winner-modal {
     display: none;

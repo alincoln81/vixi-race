@@ -25,13 +25,10 @@
 
     <div class="uk-container uk-padding">
 
-        <!-- Logo -->
-        <div id="logo" class="uk-margin-medium-bottom">
-            <div class="uk-flex uk-flex-middle uk-margin uk-flex-center">
-                <span>
-                    <img src="/assets/images/vixi-v.svg" alt="Vixi" style="height: 80px;">
-                </span>
-                <h2 class="uk-margin-remove" id="logo-text">VIXI RACE</h2>
+
+        <div id="race-logo-container" class="uk-magin-auto uk-text-center">
+            <div>
+                <img src="/assets/images/ClickRace_Logo.png" alt="Click Race Logo" style="height: 100px;">
             </div>
         </div>
 
@@ -108,24 +105,214 @@
     
     <!-- Game Script -->
     <script>
-        // Global variables
+        // Local variables
+        const socket = io(window.location.origin);
+
         let myTeam = null;
         let playerName = '';
         let playerAvatar = '/assets/images/default-avatar.png';
+        let localClicks = 0;
+        let clicksInterval = 0;
+
+        // Game title elements
+        const gameTitle = document.getElementById('game-title');
+
+        // Player setup elements
+        const playerSetup = document.getElementById('player-setup');
+        const playerAvatarPreview = document.getElementById('avatar-preview');
+        const playerForm = document.getElementById('player-form');
+        const playerNameInput = document.getElementById('player-name');
+        const teamSelect = document.getElementById('team-select');
         
-        // Replace
-        //const socket = io('http://localhost:3000');
+        // Game area elements
+        const gameArea = document.getElementById('game-area');
+        const clickArea = document.getElementById('click-area');
+        const gameInfo = document.getElementById('game-info');
+        const playerAvatarGame = document.getElementById('player-avatar-game');
 
-        // With
-        const socket = io(window.location.origin);
-
+        // Player info elements
+        const playerNameDisplay = document.getElementById('player-name-display');
+        const teamDisplay = document.getElementById('team-display');
+        const clicks = document.getElementById('clicks');
+        const timer = document.getElementById('timer');
+        
         // Connect and identify as player
         socket.on('connect', () => {
             console.log('PLAYER: Connected to server');
             socket.emit('userType', { type: 'player' });
         });
 
-        // Add this function to handle image resizing
+        // Handle game state updates
+        socket.on('gameState', (state) => {
+            console.log('Received gameState:', state); // Debug log
+            if (myTeam && state.teams[myTeam]) {
+                
+                // Show/hide elements based on game state
+                if (state.isActive ) {
+                    clickArea.style.pointerEvents = 'auto';
+                    gameTitle.textContent = 'Click as fast as you can!';
+                    
+                    // Update game info
+                    clicks.textContent = state.teams[myTeam].clicks;
+                    timer.textContent = state.timeRemaining;
+
+                    // Start sending clicks
+                    if(!clicksInterval) {
+                        clicksInterval = setInterval(sendClicks, 1000);
+                    } 
+                } 
+            }
+        });
+
+        // Handle game end
+        socket.on('gameEnd', (data) => {
+            
+            // Reset game state
+            clearClickInterval();
+            resetGame();
+
+            if (data.winner !== 'timeout') {
+                // If player is on winning team, go to winner URL, otherwise go to loser URL
+                if (myTeam === data.winner) {
+                    window.location.href = data.winnerUrl || 'https://media.tenor.com/-Yf9G_sGZ-8AAAAM/youre-a-winner-winner.gif';
+                } else {
+                    window.location.href = data.loserUrl || 'https://media.tenor.com/1cd4rNbBLagAAAAM/diaryofawimpykid-loser.gif';
+                }
+            }
+        });
+
+        // Update reset handler to show setup form
+        socket.on('forceReset', (state) => {
+            // Reset game state
+            resetGame();
+        });
+
+        // Event listeners ------------------------------------------------------------------------------------------------
+        
+        // Animate the click area
+        clickArea.addEventListener('mousedown', () => {
+            clickArea.classList.add('active');
+        });
+
+        clickArea.addEventListener('touchstart', () => {
+            clickArea.classList.add('active');
+        });
+
+        clickArea.addEventListener('mouseup', () => {
+            clickArea.classList.remove('active');
+        });
+
+        clickArea.addEventListener('touchend', () => {
+            clickArea.classList.remove('active');
+        });
+
+        // Click area handler
+        clickArea.addEventListener('click', () => {
+
+            if (myTeam) {
+                // Only increment local clicks
+                localClicks++;
+                console.log('Click detected, myTeam:', myTeam, 'localClicks:', localClicks); // Debug log
+            }
+        });
+
+        // Update the avatar file input handler
+         document.getElementById('player-avatar').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                try {
+                    const resizedImage = await resizeImage(file);
+                    document.getElementById('avatar-preview').src = resizedImage;
+                    playerAvatar = resizedImage;
+                } catch (error) {
+                    console.error('Error processing avatar:', error);
+                    // Reset avatar if there's an error
+                    document.getElementById('avatar-preview').src = '/assets/images/default-avatar.png';
+                    playerAvatar = null;
+                }
+            }
+        });
+
+        // Update form submission
+        playerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            playerName = playerNameInput.value;
+            myTeam = teamSelect.value;
+
+            if (playerName && myTeam) {
+                // Update game area with player info
+                playerNameDisplay.textContent = playerName;
+                teamDisplay.textContent = `${myTeam.charAt(0).toUpperCase() + myTeam.slice(1)}`;
+                playerAvatarGame.src = playerAvatar || '/assets/images/default-avatar.png';
+
+                // Join team with resized avatar
+                socket.emit('joinTeam', {
+                    team: myTeam,
+                    playerName: playerName,
+                    playerAvatar: playerAvatar || '/assets/images/default-avatar.png'
+                });
+
+                // Switch to game view
+                playerSetup.classList.add('uk-hidden');
+                gameArea.classList.remove('uk-hidden');
+                clickArea.classList.add(myTeam);
+            }
+        });
+
+
+        // Custom functions ------------------------------------------------------------------------------------------------
+
+         // Function to send accumulated clicks
+         function sendClicks() {
+            if (localClicks > 0) {
+                console.log('Sending accumulated clicks:', localClicks); // Debug log
+                socket.emit('playerClick', { clicks: localClicks });
+                localClicks = 0; // Reset local clicks after sending
+            }
+        }
+
+        // Function to clear click interval
+        function clearClickInterval() {
+            if (clicksInterval) {
+                clearInterval(clicksInterval);
+                clicksInterval = null;
+            }
+            localClicks = 0;
+        }
+
+        // Reset game state
+        function resetGame() {
+            
+            clearClickInterval();
+
+            myTeam = null;
+            playerName = '';
+            playerAvatar = '/assets/images/default-avatar.png';
+            localClicks = 0;
+            clicksInterval = null;
+            // Game title elements
+            gameTitle.textContent = 'Join the Race!';
+
+            // Player setup elements
+            playerSetup.classList.remove('uk-hidden');
+            playerAvatarPreview.src = '/assets/images/default-avatar.png';
+            
+            // Game area elements
+            gameArea.classList.add('uk-hidden');
+            playerAvatarGame.src = '/assets/images/default-avatar.png';
+            clickArea.classList.remove('popcorn', 'hamburger', 'hotdog');
+            clickArea.style.pointerEvents = 'none';
+
+            // Player info elements
+            playerNameDisplay.textContent = '';
+            teamDisplay.textContent = '';
+            clicks.textContent = '0';
+            timer.textContent = '0';
+            
+        }
+        
+        // Add this function to handle image resizing 
         function resizeImage(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
@@ -166,97 +353,7 @@
             });
         }
 
-        // Update the avatar file input handler
-        document.getElementById('player-avatar').addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                try {
-                    const resizedImage = await resizeImage(file);
-                    document.getElementById('avatar-preview').src = resizedImage;
-                    playerAvatar = resizedImage;
-                } catch (error) {
-                    console.error('Error processing avatar:', error);
-                    // Reset avatar if there's an error
-                    document.getElementById('avatar-preview').src = '/assets/images/default-avatar.png';
-                    playerAvatar = null;
-                }
-            }
-        });
-
-        // Update form submission
-        document.getElementById('player-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            playerName = document.getElementById('player-name').value;
-            myTeam = document.getElementById('team-select').value;
-
-            if (playerName && myTeam) {
-                // Update game area with player info
-                document.getElementById('player-name-display').textContent = playerName;
-                document.getElementById('team-display').textContent = 
-                    `${myTeam.charAt(0).toUpperCase() + myTeam.slice(1)}`;
-                document.getElementById('player-avatar-game').src = 
-                    playerAvatar || '/assets/images/default-avatar.png';
-
-                // Join team with resized avatar
-                socket.emit('joinTeam', {
-                    team: myTeam,
-                    playerName: playerName,
-                    playerAvatar: playerAvatar || '/assets/images/default-avatar.png'
-                });
-
-                // Switch to game view
-                document.getElementById('player-setup').classList.add('uk-hidden');
-                document.getElementById('game-area').classList.remove('uk-hidden');
-                document.getElementById('click-area').classList.add(myTeam);
-                document.getElementById('click-area').classList.remove('uk-hidden');
-            }
-        });
-
-        // Handle game state updates
-        socket.on('gameState', (state) => {
-            console.log('Received gameState:', state); // Debug log
-            if (myTeam && state.teams[myTeam]) {
-                const clickArea = document.getElementById('click-area');
-                const gameInfo = document.getElementById('game-info');
-                const gameTitle = document.getElementById('game-title');
-
-                // Show/hide elements based on game state
-                if (state.isActive) {
-                    clickArea.style.pointerEvents = 'auto';
-                    gameInfo.classList.add('show');
-                    gameTitle.textContent = 'Click as fast as you can!';
-                    clickArea.classList.remove('uk-hidden');
-                    // Update game info
-                    document.getElementById('clicks').textContent = state.teams[myTeam].clicks;
-                    document.getElementById('timer').textContent = state.timeRemaining;
-
-                    // Animate the click area
-                    clickArea.addEventListener('mousedown', () => {
-                        clickArea.classList.add('active');
-                    });
-
-                    clickArea.addEventListener('touchstart', () => {
-                        clickArea.classList.add('active');
-                    });
-
-                    clickArea.addEventListener('mouseup', () => {
-                        clickArea.classList.remove('active');
-                    });
-
-                    clickArea.addEventListener('touchend', () => {
-                        clickArea.classList.remove('active');
-                    });
-
-                } else {
-                    gameInfo.classList.remove('show');
-                    clickArea.style.pointerEvents = 'none';
-                    gameTitle.textContent = 'Waiting for Race to Start!';
-                }
-            }
-        });
-
-        // Add error handling for socket connection
+        // Add error handling for socket connection ------------------------------------------------------------------------
         socket.on('connect_error', (error) => {
             console.error('Connection error:', error);
             alert('Error connecting to game server. Please try again.');
@@ -267,68 +364,7 @@
             alert('Game server error. Please refresh the page and try again.');
         });
 
-        // Handle game end
-        socket.on('gameEnd', (data) => {
-            if (data.winner !== 'timeout') {
-                // If player is on winning team, go to winner URL, otherwise go to loser URL
-                if (myTeam === data.winner) {
-                    window.location.href = data.winnerUrl || 'https://media.tenor.com/-Yf9G_sGZ-8AAAAM/youre-a-winner-winner.gif';
-                } else {
-                    window.location.href = data.loserUrl || 'https://media.tenor.com/1cd4rNbBLagAAAAM/diaryofawimpykid-loser.gif';
-                }
-            }
-        });
 
-        // Update reset handler to show setup form
-        socket.on('forceReset', (state) => {
-            myTeam = null;
-            playerName = '';
-            
-            document.getElementById('player-setup').classList.remove('uk-hidden');
-            document.getElementById('game-area').classList.add('uk-hidden');
-            
-            // Reset form
-            document.getElementById('player-form').reset();
-            document.getElementById('avatar-preview').src = '/assets/images/default-avatar.png';
-            
-            // Reset game area
-            const clickArea = document.getElementById('click-area');
-            clickArea.classList.remove('popcorn', 'hamburger', 'hotdog');
-            document.getElementById('clicks').textContent = '0';
-            document.getElementById('timer').textContent = '0';
-            
-            // Show waiting state, hide game elements
-            document.getElementById('click-area').classList.add('uk-hidden');
-            document.getElementById('game-info').classList.remove('show');
-        });
-
-        // Update click area handler with debug logs
-        document.getElementById('click-area').addEventListener('click', () => {
-            console.log('Click detected, myTeam:', myTeam); // Debug log
-            if (myTeam) {
-                console.log('Emitting playerClick for team:', myTeam); // Debug log
-                socket.emit('playerClick');
-            }
-        });
-
-        // Update your joinTeam function
-        function joinTeam(team) {
-            myTeam = team;
-            socket.emit('joinTeam', {
-                team: myTeam,
-                playerName: playerName,
-                playerAvatar: playerAvatar
-            });
-
-            // Switch to game view
-            document.getElementById('player-setup').classList.add('uk-hidden');
-            document.getElementById('game-area').classList.remove('uk-hidden');
-            document.getElementById('click-area').classList.add(team);
-            
-            // Initially show waiting state
-            document.getElementById('click-area').classList.add('uk-hidden');
-            document.getElementById('game-info').classList.remove('show');
-        }
     </script>
 </body>
 </html>

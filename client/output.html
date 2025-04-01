@@ -23,22 +23,17 @@
     <div class="stage">
         <div class="game-ui uk-flex uk-flex-row uk-flex-between" uk-grid>
             
-            <div class="logo-container uk-width-auto">
-                <div id="logo" class="uk-margin-remove-bottom">
-                    <div>
-                        <div class="uk-flex uk-flex-middle uk-margin uk-flex-center">
-                            <span>
-                                <img src="/assets/images/vixi-v.svg" alt="Vixi" style="height: 40px;">
-                            </span>
-                            <h2 class="uk-margin-remove" id="logo-text">VIXI RACE</h2>
-                        </div>
-                        <div>
-                            <img src="/assets/images/clickrace_qr.png" alt="QR Code" style="height: 225px;">
-                        </div>
-                    </div>
+            <div id="race-logo-container" class="uk-magin-auto uk-text-center" style="position: absolute; left: -30px; top: -5px;">
+                <div>
+                    <img src="/assets/images/ClickRace_Logo.png" alt="QR Code" style="width: 100%; position: relative; z-index: 10;">
+                </div>
+                <div>
+                    <img src="/assets/images/clickrace_qr.png" alt="QR Code" style="height: 225px; position: relative; top: -50px; z-index: 1; box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.5);">
+                </div>
+                <div class="total-players-container uk-text-center">
+                    <h4 class="uk-margin-remove uk-text-center">Total Players<br><span id="total-players">0</span></h4>
                 </div>
             </div>
-
             <div class="blank-container uk-width-auto">
                 <div class="blank-wrapper">
                 </div>
@@ -47,24 +42,21 @@
             <div class="leaderboard-container uk-flex uk-flex-row uk-flex-around">
                 <div class="leader-wrapper" id="hotdog-leader-wrapper">
                     <div class="leader-content uk-text-center uk-margin-remove">
-                        <span id="hotdog-leader-name">Hot Dog Leader</span>
-                        <span id="hotdog-leader-divider">: </span>
+                        <span id="hotdog-leader-name">Hot Dog</span>
                         <span id="hotdog-leader">0</span>
                     </div>
                     <img src="assets/images/teams/stills/hotdog.png" alt="Hot Dog Leader" class="leader-image">
                 </div>
                 <div class="leader-wrapper" id="hamburger-leader-wrapper">
                     <div class="leader-content uk-text-center uk-margin-remove">
-                        <span id="hamburger-leader-name">Hamburger Leader</span>
-                        <span id="hamburger-leader-divider">: </span>
+                        <span id="hamburger-leader-name">Hamburger</span>
                         <span id="hamburger-leader">0</span>
                     </div>
                     <img src="assets/images/teams/stills/burger.png" alt="Hamburger Leader" class="leader-image">
                 </div>
                 <div class="leader-wrapper" id="popcorn-leader-wrapper">
                     <div class="leader-content uk-text-center uk-margin-remove">
-                        <span id="popcorn-leader-name">Popcorn Leader</span>
-                        <span id="popcorn-leader-divider">: </span>
+                        <span id="popcorn-leader-name">Popcorn</span>
                         <span id="popcorn-leader">0</span>
                     </div>
                     <img src="assets/images/teams/stills/popcorn.png" alt="Popcorn Leader" class="leader-image">
@@ -73,8 +65,7 @@
 
             <div class="timer-container uk-width-auto">
                 <div class="timer-wrapper">
-                    <h4 class="uk-text-center uk-margin-remove">Time Remaining</h4>
-                    <h2 class="uk-text-center uk-margin-remove" id="timer">30</h2>
+                    <h2 class="uk-text-center uk-margin-remove"><span id="timer">30</span></h2>
                 </div>
             </div>
         </div>
@@ -119,107 +110,143 @@
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <!-- Custom JS -->
     <script>
-        // Now you can use import statements
-    // Replace
-        //const socket = io('http://localhost:3000');
 
-        // With
-        const socket = io(window.location.origin);
+    // Global variables ------------------------------------------------------------------------------------------------------------------
+    const socket = io(window.location.origin);
 
-    // Your socket event listeners and other code
+    let currentLeaders = {
+        popcorn: { name: 'Popcorn', clicks: 0, avatar: null },
+        hamburger: { name: 'Hamburger', clicks: 0, avatar: null },
+        hotdog: { name: 'Hot Dog', clicks: 0, avatar: null }
+    };
+
+    // Socket event listeners ----------------------------------------------------------------------------------------------------------
     socket.on('connect', () => {
         console.log('OUTPUT: Connected to server');
         socket.emit('userType', { type: 'output' });
     });
 
-    // Add debug logging
+    // Update display ------------------------------------------------------------------------------------------------------------------
+    socket.on('gameState', (state) => {
+        
+        if (state.isActive) {
+
+            // Update timer
+            document.getElementById('timer').textContent = state.timeRemaining;
+
+            
+
+            // Update runners position and animation
+            ['popcorn', 'hamburger', 'hotdog'].forEach(team => {
+                const runner = document.getElementById(`${team}-runner`);
+                runner.style.left = `${state.teams[team].position}%`;
+                
+                // Update runners position and animation
+                runner.classList.add('animated');
+                
+                // Update click counters
+                document.getElementById(`${team}-clicks`).textContent = state.teams[team].clicks;
+                document.getElementById(`${team}-target`).textContent = state.clicksToWin;
+
+                // Update leader info only if there are clicks
+                const teamData = state.teams[team];
+                const playerClicks = Object.values(teamData.playerClicks);
+                
+                if (playerClicks.length > 0) {
+                    const newLeader = playerClicks.reduce((max, player) => {
+                        if (player.clicks > max.clicks) {
+                            const memberData = teamData.members.find(m => m.name === player.name);
+                            return {
+                                name: player.name,
+                                clicks: player.clicks,
+                                avatar: memberData?.avatar || '/assets/images/default-avatar.png'
+                            };
+                        }
+                        return max;
+                    }, { name: '-', clicks: 0, avatar: '/assets/images/default-avatar.png' });
+
+                    // Only update if we have a new leader with more clicks
+                    if (newLeader.clicks > currentLeaders[team].clicks) {
+                        currentLeaders[team] = newLeader;
+                    }
+                }
+
+                // Display current leader info
+                document.getElementById(`${team}-leader-name`).innerHTML = currentLeaders[team].name;
+                document.getElementById(`${team}-leader`).innerHTML = currentLeaders[team].clicks;
+                
+                // Only set background image and add overlay class if there's a leader with an avatar
+                const wrapper = document.getElementById(`${team}-leader-wrapper`);
+                if (currentLeaders[team].name !== '-' && currentLeaders[team].avatar) {
+                    wrapper.style.backgroundImage = `url('${currentLeaders[team].avatar}')`;
+                    wrapper.classList.add('has-leader');
+                } else {
+                    wrapper.style.backgroundImage = 'none';
+                    wrapper.classList.remove('has-leader');
+                }
+            });
+
+            // Update total players count
+            const totalPlayersElement = document.getElementById('total-players');
+            totalPlayersElement.textContent = state.totalPlayers;
+        }
+    });
+
+    // Clear leaders only on force reset -----------------------------------------------------------------------------------------------
+    socket.on('forceReset', (state) => {
+        console.log('OUTPUT: Force reset received');
+        resetDisplay();
+    });
+
+    // Game end ------------------------------------------------------------------------------------------------------------------------
     socket.on('gameEnd', (data) => {
         console.log('Game end received:', data); // Debug log
         
-        // Switch back to still images
-        ['popcorn', 'hamburger', 'hotdog'].forEach(team => {
-            const runner = document.getElementById(`${team}-runner`);
-            runner.classList.remove('animated');
-        });
-
         // Show winner modal if there's a winner (not timeout)
         if (data.winner !== 'timeout') {
             console.log('Showing winner modal for:', data.winner); // Debug log
             showWinnerModal(data.winner);
         }
+        resetDisplay();
     });
 
-    // Add error handling
-    socket.on('connect_error', (error) => {
-        console.error('Connection error:', error);
-    });
+    // Custom functions ----------------------------------------------------------------------------------------------------------------
+    function resetDisplay() {
+        // Reset leader info
+        currentLeaders = {
+            popcorn: { name: 'Popcorn', clicks: 0, avatar: null },
+            hamburger: { name: 'Hamburger', clicks: 0, avatar: null },
+            hotdog: { name: 'Hot Dog', clicks: 0, avatar: null }
+        };
 
-    socket.on('error', (error) => {
-        console.error('Socket error:', error);
-    });
+        // Reset total players count
+        document.getElementById('total-players').textContent = '0';
+        // Reset timer display
+        document.getElementById('timer').textContent = '30';
 
-    let currentLeaders = {
-        popcorn: { name: 'Popcorn Leader', clicks: 0, avatar: null },
-        hamburger: { name: 'Hamburger Leader', clicks: 0, avatar: null },
-        hotdog: { name: 'Hot Dog Leader', clicks: 0, avatar: null }
-    };
-
-    socket.on('gameState', (state) => {
-        document.getElementById('timer').textContent = state.timeRemaining;
-        
-        // Update runners position and animation
+        // Reset leader displays
         ['popcorn', 'hamburger', 'hotdog'].forEach(team => {
-            const runner = document.getElementById(`${team}-runner`);
-            runner.style.left = `${state.teams[team].position}%`;
             
-            // Update click counters
-            document.getElementById(`${team}-clicks`).textContent = state.teams[team].clicks;
-            document.getElementById(`${team}-target`).textContent = state.clicksToWin;
-            
-            if (state.isActive) {
-                runner.classList.add('animated');
-            } else {
-                runner.classList.remove('animated');
-            }
-
-            // Update leader info only if there are clicks
-            const teamData = state.teams[team];
-            const playerClicks = Object.values(teamData.playerClicks);
-            
-            if (playerClicks.length > 0) {
-                const newLeader = playerClicks.reduce((max, player) => {
-                    if (player.clicks > max.clicks) {
-                        const memberData = teamData.members.find(m => m.name === player.name);
-                        return {
-                            name: player.name,
-                            clicks: player.clicks,
-                            avatar: memberData?.avatar || '/assets/images/default-avatar.png'
-                        };
-                    }
-                    return max;
-                }, { name: '-', clicks: 0, avatar: '/assets/images/default-avatar.png' });
-
-                // Only update if we have a new leader with more clicks
-                if (newLeader.clicks > currentLeaders[team].clicks) {
-                    currentLeaders[team] = newLeader;
-                }
-            }
-
-            // Display current leader info
-            document.getElementById(`${team}-leader-name`).innerHTML = currentLeaders[team].name;
-            document.getElementById(`${team}-leader`).innerHTML = currentLeaders[team].clicks;
-            
-            // Only set background image and add overlay class if there's a leader with an avatar
+            // Reset leader display
             const wrapper = document.getElementById(`${team}-leader-wrapper`);
-            if (currentLeaders[team].name !== '-' && currentLeaders[team].avatar) {
-                wrapper.style.backgroundImage = `url('${currentLeaders[team].avatar}')`;
-                wrapper.classList.add('has-leader');
-            } else {
-                wrapper.style.backgroundImage = 'none';
-                wrapper.classList.remove('has-leader');
-            }
+            wrapper.style.backgroundImage = 'none';
+            wrapper.classList.remove('has-leader');
+
+            // Reset leader info
+            document.getElementById(`${team}-leader-name`).innerHTML = currentLeaders[team].name;
+            document.getElementById(`${team}-leader`).innerHTML = 0;
+            
+            // Reset click counters under the runners
+            document.getElementById(`${team}-clicks`).textContent = '0';
+            
+            // Reset runner animation and position
+            const runner = document.getElementById(`${team}-runner`);
+            runner.classList.remove('animated');
+            runner.style.left = '0%';
+
         });
-    });
+
+    }
 
     function showWinnerModal(winner) {
         const modal = document.getElementById('winner-modal');
@@ -230,7 +257,7 @@
         title.textContent = `The ${winner.charAt(0).toUpperCase() + winner.slice(1)} Team Wins!`;
 
         // Set the winner image
-        image.src = `/assets/images/teams/stills/${getTeamImage(winner)}.png`;
+        image.src = `/assets/images/teams/stills/${winner}.png`;
 
         // Show the modal
         modal.classList.add('show');
@@ -238,7 +265,6 @@
         // Automatically hide modal after 5 seconds
         setTimeout(() => {
             modal.classList.remove('show');
-            resetDisplay();
         }, 5000); // 5000 milliseconds = 5 seconds
 
         // Add click handler to close modal
@@ -249,69 +275,14 @@
         });
     }
 
-    function getTeamImage(team) {
-        const images = {
-            'popcorn': 'popcorn',
-            'hamburger': 'burger',
-            'hotdog': 'hotdog'
-        };
-        return images[team];
-    }
-
-    // Clear leaders only on force reset
-    socket.on('forceReset', (state) => {
-        console.log('OUTPUT: Force reset received');
-        currentLeaders = {
-            popcorn: { name: 'Popcorn Leader', clicks: 0, avatar: null },
-            hamburger: { name: 'Hamburger Leader', clicks: 0, avatar: null },
-            hotdog: { name: 'Hot Dog Leader', clicks: 0, avatar: null }
-        };
-
-        // Update display
-        ['popcorn', 'hamburger', 'hotdog'].forEach(team => {
-            const wrapper = document.getElementById(`${team}-leader-wrapper`);
-            document.getElementById(`${team}-leader-name`).innerHTML = currentLeaders[team].name;
-            document.getElementById(`${team}-leader`).innerHTML = 0;
-            wrapper.style.backgroundImage = 'none';
-            wrapper.classList.remove('has-leader');
-        });
-
-        // Switch back to still images
-        ['popcorn', 'hamburger', 'hotdog'].forEach(team => {
-            const runner = document.getElementById(`${team}-runner`);
-            runner.classList.remove('animated');
-        });
-
-        document.getElementById('timer').textContent = '30';
-
+    // Error handling ------------------------------------------------------------------------------------------------------------------
+    socket.on('connect_error', (error) => {
+        console.error('Connection error:', error);
     });
 
-    function resetDisplay() {
-        // Reset leader displays
-        ['popcorn', 'hamburger', 'hotdog'].forEach(team => {
-            const wrapper = document.getElementById(`${team}-leader-wrapper`);
-            document.getElementById(`${team}-leader-name`).innerHTML = 0;
-            document.getElementById(`${team}-leader`).innerHTML = 0;
-            wrapper.style.backgroundImage = 'none';
-            wrapper.classList.remove('has-leader');
-        });
-        
-
-        // Reset runner positions
-        ['popcorn', 'hamburger', 'hotdog'].forEach(team => {
-            const runner = document.getElementById(`${team}-runner`);
-            runner.style.left = '0%';
-            runner.classList.remove('animated');
-        });
-
-        // Reset timer display
-        document.getElementById('timer').textContent = '0';
-
-        // Reset click counters
-        ['popcorn', 'hamburger', 'hotdog'].forEach(team => {
-            document.getElementById(`${team}-clicks`).textContent = '0';
-        });
-    }
+    socket.on('error', (error) => {
+        console.error('Socket error:', error);
+    });
 
     </script>
 </body>

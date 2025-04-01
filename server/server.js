@@ -29,6 +29,7 @@ let gameState = {
     isActive: false,
     timeLimit: 30,
     clicksToWin: 10,
+    totalPlayers: 0,
     winnerUrl: 'https://media.tenor.com/-Yf9G_sGZ-8AAAAM/youre-a-winner-winner.gif',
     loserUrl: 'https://media.tenor.com/1cd4rNbBLagAAAAM/diaryofawimpykid-loser.gif',
     teams: {
@@ -102,6 +103,10 @@ io.on('connection', (socket) => {
                 avatar: data.playerAvatar || '/assets/images/default-avatar.png'
             });
 
+            // Update total players count
+            gameState.totalPlayers = Object.values(gameState.teams)
+                .reduce((total, team) => total + team.players, 0);
+            
             io.emit('gameState', gameState);
             
             console.log(`Player ${data.playerName} successfully joined ${data.team} team`);
@@ -112,31 +117,22 @@ io.on('connection', (socket) => {
     });
 
     // Handle player clicks
-    socket.on('playerClick', () => {
+    socket.on('playerClick', (data) => {
+
         console.log('Click received from:', socket.id, 'Team:', socket.team); // Debug log
         
         if (socket.team && gameState.isActive) {
-            const team = gameState.teams[socket.team];
-            team.clicks++;
+            const clickCount = data.clicks || 1; // Handle both single and batch clicks
+            gameState.teams[socket.team].clicks += clickCount;
             
-            // Find member data including avatar
-            const memberData = team.members.find(m => m.id === socket.id);
-            
-            // Track individual player clicks with avatar
-            if (!team.playerClicks[socket.id]) {
-                team.playerClicks[socket.id] = {
-                    name: memberData?.name || 'Unknown',
-                    clicks: 0,
-                    avatar: memberData?.avatar || '/assets/images/default-avatar.png'
-                };
-            }
-            team.playerClicks[socket.id].clicks++;
-
-            team.position = (team.clicks / gameState.clicksToWin) * 100;
+            // Update position
+            gameState.teams[socket.team].position = 
+                (gameState.teams[socket.team].clicks / gameState.clicksToWin) * 100;
             
             io.emit('gameState', gameState);
 
-            if (team.clicks >= gameState.clicksToWin) {
+            // Check for winner
+            if (gameState.teams[socket.team].clicks >= gameState.clicksToWin) {
                 endGame(socket.team);
             }
         }
@@ -169,6 +165,9 @@ io.on('connection', (socket) => {
         console.log('Disconnection:', socket.id);
         if (socket.team) {
             gameState.teams[socket.team].players--;
+            // Update total players count
+            gameState.totalPlayers = Object.values(gameState.teams)
+                .reduce((total, team) => total + team.players, 0);
             const team = gameState.teams[socket.team].members;
             const playerIndex = team.findIndex(p => p.id === socket.id);
             if (playerIndex > -1) team.splice(playerIndex, 1);
@@ -220,7 +219,8 @@ function resetGame() {
             hamburger: { clicks: 0, players: 0, position: 0, members: [], playerClicks: {} },
             hotdog: { clicks: 0, players: 0, position: 0, members: [], playerClicks: {} }
         },
-        timeRemaining: 0
+        timeRemaining: 0,
+        totalPlayers: 0
     };
 
     // Force all clients to reset

@@ -83,7 +83,6 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 #game-info {
-    transition: opacity 0.3s ease-in-out;
     background-color: #2c2c2c;
     border-radius: 12px;
     padding: 15px;
@@ -91,11 +90,6 @@ h1, h2, h3, h4, h5, h6 {
 
 #game-area h3 {
     line-height: 40px;
-}
-
-#game-info.show {
-    opacity: 1;
-    visibility: visible;
 }
 
 #logo-text {
