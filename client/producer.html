@@ -26,6 +26,16 @@
                 <img src="/assets/images/ClickRace_Logo.png" alt="Click Race Logo" style="height: 200px;">
             </div>
         </div>
+         <!-- Logo -->
+         <!-- <div id="logo" class="uk-margin-medium-bottom">
+            <div class="uk-flex uk-flex-middle uk-margin uk-flex-center">
+                <span>
+                    <img src="/assets/images/vixi-v.svg" alt="Vixi" style="height: 80px;">
+                </span>
+                <h2 class="uk-margin-remove" id="logo-text">VIXI RACE</h2>
+            </div>
+        </div> -->
+
         <!-- Game Controls -->
         <div class="uk-card uk-card-default uk-card-body uk-margin-bottom">
             <h2>Game Controls</h2>
@@ -60,15 +70,10 @@
 
         <div class="uk-card uk-card-default uk-card-body uk-margin-bottom">
             <h2>Game Stats</h2>
-            <div id="game-status" class="team-stats popcorn-team uk-flex uk-flex-middle uk-margin-small-top" uk-grid>
-                <!--
-                <div class="team-image uk-width-auto">
-                    <img id="leader-logo" src="assets/images/default-avatar.png" alt="Vixi Logo" style="width: 100px; height: 100px;">
-                </div>
-                -->
-                <div>
-                    <div id="game-status-timer"><h2 class="uk-margin-remove">Time Remaining: <span id="timer-value">30</span></h2></div>
-                    <div id="game-status-winning-team"><h2 class="uk-margin-remove">Winning Team: <span id="winning-team">-</span></h2></div>
+
+            <div class="timer-container uk-flex uk-flex-center uk-margin-bottom">
+                <div class="timer-wrapper">
+                    <h2 class="uk-text-center uk-margin-remove"><span id="timer-value">30</span></h2>
                 </div>
             </div>
 
@@ -126,14 +131,10 @@
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <!-- Custom JS -->
     <script>
-        // Now you can use import statements
-        // Replace
-        //const socket = io('http://localhost:3000');
-
-        // With
+        // Connect to the server
         const socket = io(window.location.origin);
+        // Get the timer value element
         const timerValue = document.getElementById('timer-value');
-        const winningTeam = document.getElementById('winning-team');
 
         // Your socket event listeners and other code
         socket.on('connect', () => {
@@ -147,20 +148,20 @@
         });
 
         socket.on('gameState', (state) => {
-            
             updateStats(state);
-
             if (state.isActive) {
                 timerValue.textContent = state.timeRemaining;
-
-                setLeadingTeam(state);
-            } 
+            } else {
+                timerValue.textContent = '30';
+            }
         });
 
         socket.on('forceReset', (state) => {
             updateStats(state);
-        });
 
+            // Reset timer to default
+            timerValue.textContent = '30';
+        });
 
         function updateSettings() {
             const timeLimit = parseInt(document.getElementById('timeLimit').value);
@@ -209,42 +210,7 @@
             });
         }
 
-        function setLeadingTeam(state) {
-            // Initialize variables to track leader
-            
-            console.log("State: ", state);
-
-            let leadingTeam = {
-                name: '-',
-                clicks: 0
-            };
-            let maxClicks = 0;
-
-            // Check each team's clicks
-            Object.entries(state.teams).forEach(([team, data]) => {
-                console.log("Team: ", team, " Clicks: ", data.clicks);
-                if (data.clicks > maxClicks) {
-                    maxClicks = data.clicks;
-                    leadingTeam = {
-                        name: team,
-                        clicks: data.clicks
-                    };
-                }
-            });
-
-            // Update display with leader info
-            console.log("Leading Team: ", leadingTeam.name + " " + leadingTeam.clicks);
-
-            if (leadingTeam) {
-                // Capitalize team name for display
-                winningTeam.textContent = leadingTeam.name + " " + leadingTeam.clicks;
-
-            } else {
-                winningTeam.textContent = 'No Leader Yet';
-            }
-
-        }
-
+        
         socket.on('gameEnd', (data) => {
             if (data.winner === 'timeout') {
                 console.log('Game Over - Time Out!');
@@ -252,7 +218,8 @@
                 console.log(`${data.winner} team wins!`);
             }
 
-            resetGame();
+            // Reset timer to default
+            timerValue.textContent = '30';
         });
     </script>
 </body>

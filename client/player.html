@@ -20,9 +20,9 @@
 
   
 
-</head>
-<body>
-
+    </head>
+    <body>
+        
     <div class="uk-container uk-padding">
 
 
@@ -31,6 +31,16 @@
                 <img src="/assets/images/ClickRace_Logo.png" alt="Click Race Logo" style="height: 100px;">
             </div>
         </div>
+
+        <!-- Logo -->
+        <!-- <div id="logo" class="uk-margin-medium-bottom">
+            <div class="uk-flex uk-flex-middle uk-margin uk-flex-center">
+                <span>
+                    <img src="/assets/images/vixi-v.svg" alt="Vixi" style="height: 80px;">
+                </span>
+                <h2 class="uk-margin-remove" id="logo-text">VIXI RACE</h2>
+            </div>
+        </div> -->
 
         <!-- Game Title --> 
         <h2 class="uk-text-center uk-margin-small-top" id="game-title">Join the Race!</h2>
@@ -82,7 +92,7 @@
                 </div>
             </form>
         </div>
-
+        
         <!-- Game Area -->  
         <div id="game-area" class="uk-hidden uk-margin-auto">
             <div class="uk-margin">
@@ -111,8 +121,9 @@
         let myTeam = null;
         let playerName = '';
         let playerAvatar = '/assets/images/default-avatar.png';
+        let localState = null;
         let localClicks = 0;
-        let clicksInterval = 0;
+        let clickInterval;
 
         // Game title elements
         const gameTitle = document.getElementById('game-title');
@@ -144,11 +155,19 @@
 
         // Handle game state updates
         socket.on('gameState', (state) => {
-            console.log('Received gameState:', state); // Debug log
+            
+            if (localState != state.isActive) {
+                console.log('Received Updated gameState:', state.isActive, 'localState:', localState); // Debug log
+                localState = state.isActive;
+            }
+
             if (myTeam && state.teams[myTeam]) {
-                
-                // Show/hide elements based on game state
-                if (state.isActive ) {
+                document.getElementById('clicks').textContent = state.teams[myTeam].clicks;
+                document.getElementById('timer').textContent = state.timeRemaining;
+
+                // Start interval when game becomes active
+                if (state.isActive && !clickInterval) {
+
                     clickArea.style.pointerEvents = 'auto';
                     gameTitle.textContent = 'Click as fast as you can!';
                     
@@ -156,21 +175,23 @@
                     clicks.textContent = state.teams[myTeam].clicks;
                     timer.textContent = state.timeRemaining;
 
-                    // Start sending clicks
-                    if(!clicksInterval) {
-                        clicksInterval = setInterval(sendClicks, 1000);
-                    } 
-                } 
+                    clickInterval = setInterval(sendAccumulatedClicks, 1000); // Send every 2 seconds
+                }
+                // Clear interval when game ends
+                else if (!state.isActive && clickInterval) {
+                    
+                    clickArea.style.pointerEvents = 'none';
+                    gameTitle.textContent = 'Waiting for Race to Start!';
+                    
+                    clearInterval(clickInterval);
+                    clickInterval = null;
+                    localClicks = 0; // Reset local clicks
+                }
             }
         });
 
         // Handle game end
         socket.on('gameEnd', (data) => {
-            
-            // Reset game state
-            clearClickInterval();
-            resetGame();
-
             if (data.winner !== 'timeout') {
                 // If player is on winning team, go to winner URL, otherwise go to loser URL
                 if (myTeam === data.winner) {
@@ -178,15 +199,21 @@
                 } else {
                     window.location.href = data.loserUrl || 'https://media.tenor.com/1cd4rNbBLagAAAAM/diaryofawimpykid-loser.gif';
                 }
-            }
+            } 
+            console.error('Game End:', data);
+            resetGame();
         });
 
         // Update reset handler to show setup form
         socket.on('forceReset', (state) => {
-            // Reset game state
+            console.error('forceReset:', state);
             resetGame();
         });
 
+        socket.on('disconnect', () => {
+            console.error('Connection error:', error);
+            resetGame();
+        });
         // Event listeners ------------------------------------------------------------------------------------------------
         
         // Animate the click area
@@ -208,9 +235,7 @@
 
         // Click area handler
         clickArea.addEventListener('click', () => {
-
             if (myTeam) {
-                // Only increment local clicks
                 localClicks++;
                 console.log('Click detected, myTeam:', myTeam, 'localClicks:', localClicks); // Debug log
             }
@@ -263,34 +288,20 @@
 
         // Custom functions ------------------------------------------------------------------------------------------------
 
-         // Function to send accumulated clicks
-         function sendClicks() {
-            if (localClicks > 0) {
-                console.log('Sending accumulated clicks:', localClicks); // Debug log
-                socket.emit('playerClick', { clicks: localClicks });
-                localClicks = 0; // Reset local clicks after sending
-            }
-        }
-
-        // Function to clear click interval
-        function clearClickInterval() {
-            if (clicksInterval) {
-                clearInterval(clicksInterval);
-                clicksInterval = null;
-            }
-            localClicks = 0;
-        }
-
         // Reset game state
         function resetGame() {
             
-            clearClickInterval();
+            if (clickInterval) {
+                clearInterval(clickInterval);
+                clickInterval = null;
+            }
+            localClicks = 0;
 
             myTeam = null;
             playerName = '';
             playerAvatar = '/assets/images/default-avatar.png';
-            localClicks = 0;
-            clicksInterval = null;
+            localState = null;
+
             // Game title elements
             gameTitle.textContent = 'Join the Race!';
 
@@ -364,7 +375,15 @@
             alert('Game server error. Please refresh the page and try again.');
         });
 
-
+        // Function to send accumulated clicks
+        function sendAccumulatedClicks() {
+            if (localClicks > 0 && myTeam) {
+                console.log('Sending accumulated clicks:', localClicks); // Debug log
+                socket.emit('playerClick', { clicks: localClicks });
+                localClicks = 0; // Reset local clicks after sending
+            }
+        }
+        
     </script>
-</body>
+    </body>
 </html>

@@ -128,68 +128,65 @@
 
     // Update display ------------------------------------------------------------------------------------------------------------------
     socket.on('gameState', (state) => {
+        // Update timer
+        document.getElementById('timer').textContent = state.timeRemaining;
         
-        if (state.isActive) {
-
-            // Update timer
-            document.getElementById('timer').textContent = state.timeRemaining;
-
+        // Update runners position and animation
+        ['popcorn', 'hamburger', 'hotdog'].forEach(team => {
+            const runner = document.getElementById(`${team}-runner`);
+            runner.style.left = `${state.teams[team].position}%`;
             
-
-            // Update runners position and animation
-            ['popcorn', 'hamburger', 'hotdog'].forEach(team => {
-                const runner = document.getElementById(`${team}-runner`);
-                runner.style.left = `${state.teams[team].position}%`;
-                
-                // Update runners position and animation
+            // Update click counters
+            document.getElementById(`${team}-clicks`).textContent = state.teams[team].clicks;
+            document.getElementById(`${team}-target`).textContent = state.clicksToWin;
+            
+            if (state.isActive) {
                 runner.classList.add('animated');
-                
-                // Update click counters
-                document.getElementById(`${team}-clicks`).textContent = state.teams[team].clicks;
-                document.getElementById(`${team}-target`).textContent = state.clicksToWin;
+            } else {
+                runner.classList.remove('animated');
+            }
 
-                // Update leader info only if there are clicks
-                const teamData = state.teams[team];
-                const playerClicks = Object.values(teamData.playerClicks);
-                
-                if (playerClicks.length > 0) {
-                    const newLeader = playerClicks.reduce((max, player) => {
-                        if (player.clicks > max.clicks) {
-                            const memberData = teamData.members.find(m => m.name === player.name);
-                            return {
-                                name: player.name,
-                                clicks: player.clicks,
-                                avatar: memberData?.avatar || '/assets/images/default-avatar.png'
-                            };
-                        }
-                        return max;
-                    }, { name: '-', clicks: 0, avatar: '/assets/images/default-avatar.png' });
-
-                    // Only update if we have a new leader with more clicks
-                    if (newLeader.clicks > currentLeaders[team].clicks) {
-                        currentLeaders[team] = newLeader;
+            // Update leader info only if there are clicks
+            const teamData = state.teams[team];
+            const playerClicks = Object.values(teamData.playerClicks);
+            
+            if (playerClicks.length > 0) {
+                const newLeader = playerClicks.reduce((max, player) => {
+                    if (player.clicks > max.clicks) {
+                        const memberData = teamData.members.find(m => m.name === player.name);
+                        return {
+                            name: player.name,
+                            clicks: player.clicks,
+                            avatar: memberData?.avatar || '/assets/images/default-avatar.png'
+                        };
                     }
-                }
+                    return max;
+                }, { name: '-', clicks: 0, avatar: '/assets/images/default-avatar.png' });
 
-                // Display current leader info
-                document.getElementById(`${team}-leader-name`).innerHTML = currentLeaders[team].name;
-                document.getElementById(`${team}-leader`).innerHTML = currentLeaders[team].clicks;
-                
-                // Only set background image and add overlay class if there's a leader with an avatar
-                const wrapper = document.getElementById(`${team}-leader-wrapper`);
-                if (currentLeaders[team].name !== '-' && currentLeaders[team].avatar) {
-                    wrapper.style.backgroundImage = `url('${currentLeaders[team].avatar}')`;
-                    wrapper.classList.add('has-leader');
-                } else {
-                    wrapper.style.backgroundImage = 'none';
-                    wrapper.classList.remove('has-leader');
+                // Only update if we have a new leader with more clicks
+                if (newLeader.clicks > currentLeaders[team].clicks) {
+                    currentLeaders[team] = newLeader;
                 }
-            });
+            }
 
-            // Update total players count
-            const totalPlayersElement = document.getElementById('total-players');
-            totalPlayersElement.textContent = state.totalPlayers;
-        }
+            // Display current leader info
+            document.getElementById(`${team}-leader-name`).innerHTML = currentLeaders[team].name;
+            document.getElementById(`${team}-leader`).innerHTML = currentLeaders[team].clicks;
+            
+            // Only set background image and add overlay class if there's a leader with an avatar
+            const wrapper = document.getElementById(`${team}-leader-wrapper`);
+            if (currentLeaders[team].name !== '-' && currentLeaders[team].avatar) {
+                wrapper.style.backgroundImage = `url('${currentLeaders[team].avatar}')`;
+                wrapper.classList.add('has-leader');
+            } else {
+                wrapper.style.backgroundImage = 'none';
+                wrapper.classList.remove('has-leader');
+            }
+        });
+
+        // Update total players count
+        const totalPlayersElement = document.getElementById('total-players');
+        totalPlayersElement.textContent = state.totalPlayers;
     });
 
     // Clear leaders only on force reset -----------------------------------------------------------------------------------------------
@@ -221,31 +218,36 @@
 
         // Reset total players count
         document.getElementById('total-players').textContent = '0';
-        // Reset timer display
-        document.getElementById('timer').textContent = '30';
 
         // Reset leader displays
         ['popcorn', 'hamburger', 'hotdog'].forEach(team => {
-            
-            // Reset leader display
             const wrapper = document.getElementById(`${team}-leader-wrapper`);
-            wrapper.style.backgroundImage = 'none';
-            wrapper.classList.remove('has-leader');
-
-            // Reset leader info
             document.getElementById(`${team}-leader-name`).innerHTML = currentLeaders[team].name;
             document.getElementById(`${team}-leader`).innerHTML = 0;
-            
-            // Reset click counters under the runners
-            document.getElementById(`${team}-clicks`).textContent = '0';
-            
-            // Reset runner animation and position
-            const runner = document.getElementById(`${team}-runner`);
-            runner.classList.remove('animated');
-            runner.style.left = '0%';
-
+            wrapper.style.backgroundImage = 'none';
+            wrapper.classList.remove('has-leader');
         });
 
+        // Reset timer display
+        document.getElementById('timer').textContent = '30';
+        
+        // Reset click counters under the runners
+        ['popcorn', 'hamburger', 'hotdog'].forEach(team => {
+            document.getElementById(`${team}-clicks`).textContent = '0';
+        });
+    
+        // Switch back to still images
+        ['popcorn', 'hamburger', 'hotdog'].forEach(team => {
+            const runner = document.getElementById(`${team}-runner`);
+            runner.classList.remove('animated');
+        });
+
+        // Reset runner positions
+        ['popcorn', 'hamburger', 'hotdog'].forEach(team => {
+            const runner = document.getElementById(`${team}-runner`);
+            runner.style.left = '0%';
+            runner.classList.remove('animated');
+        });
     }
 
     function showWinnerModal(winner) {

@@ -118,17 +118,28 @@ io.on('connection', (socket) => {
 
     // Handle player clicks
     socket.on('playerClick', (data) => {
-
         console.log('Click received from:', socket.id, 'Team:', socket.team); // Debug log
-        
         if (socket.team && gameState.isActive) {
-            const clickCount = data.clicks || 1; // Handle both single and batch clicks
-            gameState.teams[socket.team].clicks += clickCount;
-            
-            // Update position
-            gameState.teams[socket.team].position = 
-                (gameState.teams[socket.team].clicks / gameState.clicksToWin) * 100;
-            
+            const clickCount = data.clicks || 1;
+            const team = gameState.teams[socket.team];
+
+            // Update team total clicks
+            team.clicks += clickCount;
+            team.position = (team.clicks / gameState.clicksToWin) * 100;
+
+            // Update individual player clicks
+            if (!team.playerClicks[socket.id]) {
+                team.playerClicks[socket.id] = {
+                    name: team.members.find(m => m.id === socket.id)?.name || 'Unknown',
+                    clicks: 0,
+                    avatar: team.members.find(m => m.id === socket.id)?.avatar || null
+                };
+            }
+            team.playerClicks[socket.id].clicks += clickCount;
+
+            // Log for debugging
+            console.log(`Player ${team.playerClicks[socket.id].name} total clicks: ${team.playerClicks[socket.id].clicks}`);
+
             io.emit('gameState', gameState);
 
             // Check for winner
