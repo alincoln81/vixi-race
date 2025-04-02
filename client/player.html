@@ -175,7 +175,7 @@
                     clicks.textContent = state.teams[myTeam].clicks;
                     timer.textContent = state.timeRemaining;
 
-                    clickInterval = setInterval(sendAccumulatedClicks, Math.random() * 2000 - 300) + 300; // Send every 300 ms to 2 seconds
+                    clickInterval = setInterval(sendAccumulatedClicks, Math.random() * (1001 - 100) + 100); // Send every 100-1000ms    
                 }
                 // Clear interval when game ends
                 else if (!state.isActive && clickInterval) {
