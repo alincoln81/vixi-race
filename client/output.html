@@ -199,12 +199,13 @@
     socket.on('gameEnd', (data) => {
         console.log('Game end received:', data); // Debug log
         
+        resetDisplay();
+
         // Show winner modal if there's a winner (not timeout)
         if (data.winner !== 'timeout') {
             console.log('Showing winner modal for:', data.winner); // Debug log
             showWinnerModal(data.winner);
         }
-        resetDisplay();
     });
 
     // Custom functions ----------------------------------------------------------------------------------------------------------------
